@@ -13,16 +13,86 @@ faasr_tidy_hobo <- function(input_file, output_file) {
   raw_data <- read.csv("input_data.csv")
   faasr_log(paste("Read", nrow(raw_data), "rows of data"))
   
+  # Log column names for debugging
+  faasr_log(paste("Column names in raw data:", paste(colnames(raw_data), collapse = ", ")))
+  
+  # Handle different possible column names
+  datetime_col <- NA
+  temp_col <- NA
+  cond_col <- NA
+  
+  # Find datetime column
+  datetime_candidates <- c("datetime", "DateTime", "Date.Time", "date_time", "DATETIME")
+  for (col in datetime_candidates) {
+    if (col %in% colnames(raw_data)) {
+      datetime_col <- col
+      break
+    }
+  }
+  
+  # Find temperature column
+  temp_candidates <- c("tempC", "temp", "temperature", "Temperature", "Temp", "temp_c", "TEMP")
+  for (col in temp_candidates) {
+    if (col %in% colnames(raw_data)) {
+      temp_col <- col
+      break
+    }
+  }
+  
+  # Find conductivity column
+  cond_candidates <- c("condUncal", "conductivity", "Conductivity", "cond", "COND", "conduct")
+  for (col in cond_candidates) {
+    if (col %in% colnames(raw_data)) {
+      cond_col <- col
+      break
+    }
+  }
+  
+  # Check if we found all required columns
+  if (is.na(datetime_col)) {
+    stop("Could not find datetime column. Available columns: ", paste(colnames(raw_data), collapse = ", "))
+  }
+  if (is.na(temp_col)) {
+    stop("Could not find temperature column. Available columns: ", paste(colnames(raw_data), collapse = ", "))
+  }
+  if (is.na(cond_col)) {
+    stop("Could not find conductivity column. Available columns: ", paste(colnames(raw_data), collapse = ", "))
+  }
+  
+  faasr_log(paste("Using columns - datetime:", datetime_col, ", temperature:", temp_col, ", conductivity:", cond_col))
+  
   # STICr tidy_hobo_data() implementation
   # The function should output exactly 3 columns: datetime, condUncal, tempC
   
   # 1. Convert datetime to proper POSIXct format (UTC)
+  # Try different datetime formats
+  datetime_formats <- c(
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%dT%H:%M:%SZ", 
+    "%m/%d/%Y %H:%M:%S",
+    "%d/%m/%Y %H:%M:%S",
+    "%Y-%m-%d %H:%M",
+    "%m/%d/%Y %H:%M"
+  )
+  
+  datetime_converted <- NULL
+  for (fmt in datetime_formats) {
+    datetime_converted <- as.POSIXct(raw_data[[datetime_col]], format = fmt, tz = "UTC")
+    if (!all(is.na(datetime_converted))) {
+      faasr_log(paste("Successfully parsed datetime using format:", fmt))
+      break
+    }
+  }
+  
+  if (all(is.na(datetime_converted))) {
+    stop("Could not parse datetime column with any known format")
+  }
+  
+  # Create tidy data frame
   tidy_data <- data.frame(
-    datetime = as.POSIXct(raw_data$datetime, 
-                         format = "%Y-%m-%dT%H:%M:%SZ", 
-                         tz = "UTC"),
-    condUncal = raw_data$condUncal,
-    tempC = raw_data$tempC
+    datetime = datetime_converted,
+    condUncal = as.numeric(raw_data[[cond_col]]),
+    tempC = as.numeric(raw_data[[temp_col]])
   )
   
   # 2. Remove any duplicate timestamps
