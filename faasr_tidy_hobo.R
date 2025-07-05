@@ -1,6 +1,5 @@
-
 faasr_tidy_hobo <- function(input_file, output_file) {
-  # Step 1: Tidy HOBO/STIC sensor data
+  # Step 1: Tidy HOBO/STIC sensor data (STICr paper implementation)
   
   # Log start
   faasr_log(paste("Starting tidy process for:", input_file))
@@ -14,13 +13,17 @@ faasr_tidy_hobo <- function(input_file, output_file) {
   raw_data <- read.csv("input_data.csv")
   faasr_log(paste("Read", nrow(raw_data), "rows of data"))
   
-  # Tidy operations based on STICr workflow
-  tidy_data <- raw_data
+  # STICr tidy_hobo_data() implementation
+  # The function should output exactly 3 columns: datetime, condUncal, tempC
   
-  # 1. Convert datetime to proper POSIXct format
-  tidy_data$datetime <- as.POSIXct(tidy_data$datetime, 
-                                   format = "%Y-%m-%dT%H:%M:%SZ", 
-                                   tz = "UTC")
+  # 1. Convert datetime to proper POSIXct format (UTC)
+  tidy_data <- data.frame(
+    datetime = as.POSIXct(raw_data$datetime, 
+                         format = "%Y-%m-%dT%H:%M:%SZ", 
+                         tz = "UTC"),
+    condUncal = raw_data$condUncal,
+    tempC = raw_data$tempC
+  )
   
   # 2. Remove any duplicate timestamps
   tidy_data <- tidy_data[!duplicated(tidy_data$datetime), ]
@@ -28,29 +31,18 @@ faasr_tidy_hobo <- function(input_file, output_file) {
   # 3. Sort by datetime
   tidy_data <- tidy_data[order(tidy_data$datetime), ]
   
-  # 4. Add derived columns for analysis
-  tidy_data$year <- format(tidy_data$datetime, "%Y")
-  tidy_data$month <- format(tidy_data$datetime, "%m")
-  tidy_data$day <- format(tidy_data$datetime, "%d")
-  tidy_data$hour <- format(tidy_data$datetime, "%H")
-  
-  # 5. Create unique record ID
-  tidy_data$record_id <- paste(tidy_data$siteId, 
-                               tidy_data$sublocation,
-                               format(tidy_data$datetime, "%Y%m%d%H%M%S"),
-                               sep = "_")
-  
-  # 6. Add processing metadata
-  tidy_data$tidy_date <- Sys.Date()
-  tidy_data$tidy_version <- "1.0"
+  # 4. Remove any rows with NA datetime (invalid dates)
+  tidy_data <- tidy_data[!is.na(tidy_data$datetime), ]
   
   # Log summary statistics
   faasr_log(paste("After tidying:", nrow(tidy_data), "rows"))
   faasr_log(paste("Date range:", min(tidy_data$datetime), "to", max(tidy_data$datetime)))
   faasr_log(paste("Temperature range:", round(min(tidy_data$tempC, na.rm=TRUE), 2), 
                   "to", round(max(tidy_data$tempC, na.rm=TRUE), 2), "C"))
+  faasr_log(paste("Conductivity range:", round(min(tidy_data$condUncal, na.rm=TRUE), 2), 
+                  "to", round(max(tidy_data$condUncal, na.rm=TRUE), 2)))
   
-  # Save tidied data
+  # Save tidied data with only the 3 required columns
   write.csv(tidy_data, "tidy_output.csv", row.names = FALSE)
   
   # Upload to Minio
@@ -59,4 +51,5 @@ faasr_tidy_hobo <- function(input_file, output_file) {
                  remote_file = output_file)
   
   faasr_log(paste("Tidy process completed. Output saved as:", output_file))
+  faasr_log("Output columns: datetime, condUncal, tempC (STICr paper implementation)")
 }
