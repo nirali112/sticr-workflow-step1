@@ -1,44 +1,60 @@
-neon4cast_config <- list(
-  ComputeServers = list(
-    My_GitHub_Account = list(
-      FaaSType = "GitHubActions",
-      UserName = "nirali112",
-      ActionRepoName = "sticr-workflow-step1",
-      Branch = "main",
-      Token = "MY_GITHUB_ACCOUNT_TOKEN"
-    )
-  ),
-  DataStores = list(
-    My_Minio_Bucket = list(
-      Endpoint = "https://play.min.io",
-      Bucket = "faasr",
-      Region = "us-east-1",
-      Writable = "TRUE",
-      AccessKey = "MY_MINIO_BUCKET_ACCESS_KEY",
-      SecretKey = "MY_MINIO_BUCKET_SECRET_KEY"
-    )
-  ),
-  FunctionList = list(
-    tidy_hobo_sticr = list(
-      FunctionName = "faasr_tidy_hobo_sticr",
-      FaaSServer = "My_GitHub_Account",
-      Arguments = list(
-        input_file = "STIC_GP_KNZ_02M10_LS_2022.csv",
-        output_file = "STIC_GP_KNZ_02M10_LS_2022_sticr_tidy.csv"
-      ),
-      InvokeNext = list()
-    )
-  ),
-  FunctionInvoke = "tidy_hobo_sticr",
-  DefaultDataStore = "My_Minio_Bucket",
-  FunctionGitRepo = list(
-    faasr_tidy_hobo_sticr = "nirali112/sticr-functions"
-  ),
-  ActionContainers = list(
-    tidy_hobo_sticr = "ghcr.io/faasr/github-actions-tidyverse"
-  )
-  # NOTE: No FunctionGitHubPackage or FunctionCRANPackage sections
-  # Packages will be installed manually in the function
-)
+# Step 44: Display the final payload.json content to copy to GitHub
+cat("=== COPY THIS TO YOUR GITHUB PAYLOAD.JSON ===\n")
+cat('
+{
+  "ComputeServers": {
+    "My_GitHub_Account": {
+      "FaaSType": "GitHubActions",
+      "UserName": "nirali112",
+      "ActionRepoName": "sticr-workflow-step1",
+      "Branch": "main",
+      "Token": "MY_GITHUB_ACCOUNT_TOKEN"
+    }
+  },
+  "DataStores": {
+    "My_Minio_Bucket": {
+      "Endpoint": "https://play.min.io",
+      "Bucket": "faasr",
+      "Region": "us-east-1",
+      "Writable": "TRUE",
+      "AccessKey": "MY_MINIO_BUCKET_ACCESS_KEY",
+      "SecretKey": "MY_MINIO_BUCKET_SECRET_KEY"
+    }
+  },
+  "FunctionList": {
+    "tidy_hobo_sticr": {
+      "FunctionName": "faasr_tidy_hobo_sticr",
+      "FaaSServer": "My_GitHub_Account",
+      "Arguments": {
+        "input_file": "STIC_GP_KNZ_02M10_LS_2022.csv",
+        "output_file": "STIC_GP_KNZ_02M10_LS_2022_sticr_tidy.csv"
+      },
+      "InvokeNext": []
+    }
+  },
+  "FunctionInvoke": "tidy_hobo_sticr",
+  "DefaultDataStore": "My_Minio_Bucket",
+  "FunctionGitRepo": {
+    "faasr_tidy_hobo_sticr": "nirali112/sticr-functions"
+  },
+  "ActionContainers": {
+    "tidy_hobo_sticr": "ghcr.io/faasr/github-actions-tidyverse"
+  }
+}
+')
 
-write_json(neon4cast_config, "payload_neon4cast_pattern.json", pretty = TRUE, auto_unbox = TRUE)
+cat("\n=== FINAL CHECKLIST ===\n")
+cat("✅ R function updated with manual package installation\n")
+cat("✅ YAML file uses individual secrets\n")
+cat("✅ Individual secrets created in GitHub\n")
+cat("✅ JSON configuration simplified (no package sections)\n\n")
+
+cat("=== READY TO TEST ===\n")
+cat("1. Copy the JSON above to replace your GitHub payload.json\n")
+cat("2. Go to GitHub Actions and run the workflow\n")
+cat("3. The function will install STICr from HEAL-KGS/STICr automatically\n\n")
+
+cat("This should work because:\n")
+cat("- ✅ Follows neon4cast pattern (manual package installation)\n")
+cat("- ✅ Uses professor's working STICr source (HEAL-KGS/STICr)\n")
+cat("- ✅ No complex package management - function handles everything\n")
