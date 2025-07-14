@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/faasr/github-actions-tidyverse
     env:
-      SECRET_PAYLOAD: ${{ secrets.SECRET_PAYLOAD }}
+      MY_GITHUB_ACCOUNT_TOKEN: ${{ secrets.MY_GITHUB_ACCOUNT_TOKEN }}
+      MY_MINIO_BUCKET_ACCESS_KEY: ${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}
+      MY_MINIO_BUCKET_SECRET_KEY: ${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       PAYLOAD_REPO: ${{ vars.PAYLOAD_REPO }}
       PAYLOAD: ${{ github.event.inputs.PAYLOAD }}
