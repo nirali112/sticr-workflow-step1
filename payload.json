@@ -38,7 +38,3 @@
     "tidy_hobo_sticr": "ghcr.io/faasr/github-actions-tidyverse"
   }
 }
-cat("This should work because:\n")
-cat("- ✅ Follows neon4cast pattern (manual package installation)\n")
-cat("- ✅ Uses professor's working STICr source (HEAL-KGS/STICr)\n")
-cat("- ✅ No complex package management - function handles everything\n")
