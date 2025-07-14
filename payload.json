@@ -1,63 +1,48 @@
 {
-    "ComputeServers": {
-        "My_GitHub_Account": {
-            "FaaSType": "GitHubActions",
-            "UserName": "nirali112",
-            "ActionRepoName": "sticr-workflow-step1",
-            "Branch": "main",
-            "Token": "My_GitHub_Account_TOKEN"
-        }
-    },
-    "DataStores": {
-        "My_Minio_Bucket": {
-            "Endpoint": "https://play.min.io",
-            "Bucket": "faasr",
-            "Region": "us-east-1",
-            "Writable": "TRUE",
-            "AccessKey": "My_Minio_Bucket_ACCESS_KEY",
-            "SecretKey": "My_Minio_Bucket_SECRET_KEY"
-        }
-    },
-    "FunctionList": {
-        "calibrate_stic": {
-            "FunctionName": "faasr_calibrate_stic",
-            "FaaSServer": "My_GitHub_Account",
-            "Arguments": {
-                "input_file": "STIC_GP_KNZ_04M12_HS_2022_tidy.csv",
-                "output_file": "STIC_GP_KNZ_04M12_HS_2022_calibrated.csv",
-                "calibration_slope": 0.0001,
-                "calibration_intercept": 0
-            },
-            "InvokeNext": [
-
-            ]
-        },
-        "tidy_hobo_sticr": {
-            "FunctionName": "faasr_tidy_hobo_sticr",
-            "FaaSServer": "My_GitHub_Account",
-            "Arguments": {
-                "input_file": "STIC_GP_KNZ_04M12_HS_2022.csv",
-                "output_file": "STIC_GP_KNZ_04M12_HS_2022_sticr_tidy.csv"
-            },
-            "InvokeNext": "calibrate_stic"
-        }
-    },
-    "FunctionInvoke": "tidy_hobo_sticr",
-    "DefaultDataStore": "My_Minio_Bucket",
-    "FunctionGitRepo": {
-        "faasr_calibrate_stic": "nirali112/sticr-workflow-step1",
-        "faasr_tidy_hobo_sticr": "nirali112/sticr-workflow-step1"
-    },
-    "ActionContainers": {
-        "calibrate_stic": "ghcr.io/faasr/github-actions-tidyverse",
-        "tidy_hobo_sticr": "ghcr.io/faasr/github-actions-tidyverse"
-    },
-    "CRANPackages": {
-        "tidy_hobo_sticr": [
-            "STICr",
-            "tidyverse",
-            "lubridate"
-        ]
+  "ComputeServers": {
+    "My_GitHub_Account": {
+      "FaaSType": "GitHubActions",
+      "UserName": "nirali112",
+      "ActionRepoName": "sticr-workflow-step1",
+      "Branch": "main",
+      "Token": "MY_GITHUB_ACCOUNT_TOKEN"
     }
+  },
+  "DataStores": {
+    "My_Minio_Bucket": {
+      "Endpoint": "https://play.min.io",
+      "Bucket": "faasr",
+      "Region": "us-east-1",
+      "Writable": "TRUE",
+      "AccessKey": "MY_MINIO_BUCKET_ACCESS_KEY",
+      "SecretKey": "MY_MINIO_BUCKET_SECRET_KEY"
+    }
+  },
+  "FunctionList": {
+    "tidy_hobo_sticr": {
+      "FunctionName": "faasr_tidy_hobo_sticr",
+      "FaaSServer": "My_GitHub_Account",
+      "Arguments": {
+        "input_file": "STIC_GP_KNZ_02M10_LS_2022.csv",
+        "output_file": "STIC_GP_KNZ_02M10_LS_2022_sticr_tidy.csv"
+      },
+      "InvokeNext": []
+    }
+  },
+  "FunctionInvoke": "tidy_hobo_sticr",
+  "DefaultDataStore": "My_Minio_Bucket",
+  "FunctionGitRepo": {
+    "faasr_tidy_hobo_sticr": "nirali112/sticr-functions"
+  },
+  "ActionContainers": {
+    "tidy_hobo_sticr": "ghcr.io/faasr/github-actions-tidyverse"
+  },
+  "FunctionGitHubPackage": {
+    "faasr_tidy_hobo_sticr": [
+      "HEAL-KGS/STICr"
+    ]
+  },
+  "FunctionCRANPackage": {
+    "faasr_tidy_hobo_sticr": ["tidyverse", "lubridate"]
+  }
 }
-
