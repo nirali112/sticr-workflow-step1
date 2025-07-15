@@ -5,6 +5,11 @@ on:
       PAYLOAD:
         description: 'Payload'
         required: false
+
+permissions:
+  contents: read
+  actions: read
+  
 jobs:
   run_docker_image:
     runs-on: ubuntu-latest
