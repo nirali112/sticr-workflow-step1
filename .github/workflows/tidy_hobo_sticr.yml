@@ -5,7 +5,6 @@ on:
       PAYLOAD:
         description: 'Payload'
         required: false
-
 jobs:
   run_docker_image:
     runs-on: ubuntu-latest
@@ -15,9 +14,47 @@ jobs:
       MY_MINIO_BUCKET_ACCESS_KEY: ${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}
       MY_MINIO_BUCKET_SECRET_KEY: ${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      PAYLOAD_REPO: ${{ vars.PAYLOAD_REPO }}
-      PAYLOAD: ${{ github.event.inputs.PAYLOAD }}
+      # PAYLOAD_REPO: ${{ vars.PAYLOAD_REPO }}  # Commenting out the old approach
+      PAYLOAD: |
+        {
+          "FunctionList": ["faasr_tidy_hobo_sticr"],
+          "FunctionInvoke": "faasr_tidy_hobo_sticr",
+          "FunctionGitHubRepo": "nirali112/sticr-functions",
+          "FunctionGitHubBranch": "main",
+          "FunctionGitHubPath": ".",
+          "FunctionGitHubPackage": ["devtools", "remotes"],
+          "FunctionCRANPackage": ["dplyr", "readr"],
+          "ComputeServers": {
+            "my-github-actions": {
+              "FaaSType": "GitHubActions",
+              "ActionTimeout": 1000
+            }
+          },
+          "DataStores": {
+            "my-minio": {
+              "FaaSType": "minio",
+              "Endpoint": "play.min.io",
+              "AccessKey": "${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}",
+              "SecretKey": "${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}",
+              "Bucket": "faasr"
+            }
+          }
+        }
     steps:
+    - name: Debug PAYLOAD Environment Variable
+      run: |
+        echo "=== PAYLOAD DEBUG ==="
+        echo "PAYLOAD length: ${#PAYLOAD}"
+        echo "PAYLOAD first 200 chars:"
+        echo "${PAYLOAD:0:200}"
+        echo "PAYLOAD last 100 chars:"
+        echo "${PAYLOAD: -100}"
+        echo "=== JSON VALIDATION ==="
+        echo "$PAYLOAD" | jq . > /dev/null && echo "✓ Valid JSON" || echo "✗ Invalid JSON"
+        echo "=== ENVIRONMENT COMPARISON ==="
+        echo "PAYLOAD_REPO: ${PAYLOAD_REPO:-'(not set)'}"
+        echo "PAYLOAD is set: ${PAYLOAD:+'YES'}"
+        
     - name: run Rscript
       run: |
         cd /action
