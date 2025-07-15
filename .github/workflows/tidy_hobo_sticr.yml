@@ -14,65 +14,37 @@ jobs:
       MY_MINIO_BUCKET_ACCESS_KEY: ${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}
       MY_MINIO_BUCKET_SECRET_KEY: ${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      PAYLOAD: |
-        {
-          "FunctionList": ["faasr_tidy_hobo_sticr"],
-          "FunctionInvoke": "faasr_tidy_hobo_sticr",
-          "FunctionGitHubRepo": "nirali112/sticr-functions",
-          "FunctionGitHubBranch": "main",
-          "FunctionGitHubPath": ".",
-          "FunctionGitHubPackage": ["devtools", "remotes"],
-          "FunctionCRANPackage": ["dplyr", "readr"],
-          "ComputeServers": {
-            "my-github-actions": {
-              "FaaSType": "GitHubActions",
-              "ActionTimeout": 1000
-            }
-          },
-          "DataStores": {
-            "my-minio": {
-              "FaaSType": "minio",
-              "Endpoint": "play.min.io",
-              "AccessKey": "${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}",
-              "SecretKey": "${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}",
-              "Bucket": "faasr"
-            }
-          }
-        }
+      PAYLOAD: '{"FunctionList":["faasr_tidy_hobo_sticr"],"FunctionInvoke":"faasr_tidy_hobo_sticr","FunctionGitHubRepo":"nirali112/sticr-functions","FunctionGitHubBranch":"main","FunctionGitHubPath":".","FunctionGitHubPackage":["devtools","remotes"],"FunctionCRANPackage":["dplyr","readr"],"ComputeServers":{"my-github-actions":{"FaaSType":"GitHubActions","ActionTimeout":1000}},"DataStores":{"my-minio":{"FaaSType":"minio","Endpoint":"play.min.io","AccessKey":"${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}","SecretKey":"${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}","Bucket":"faasr"}}}'
     steps:
-    - name: Test R JSON Processing
+    - name: Verify JSON Still Works
+      run: |
+        echo "=== SINGLE-LINE JSON TEST ==="
+        echo "PAYLOAD length: ${#PAYLOAD}"
+        cd /action
+        cat > test_singleline.R << 'EOF'
+        library(jsonlite)
+        payload_raw <- Sys.getenv("PAYLOAD")
+        cat("Length:", nchar(payload_raw), "\n")
+        tryCatch({
+          parsed <- jsonlite::fromJSON(payload_raw)
+          cat("✓ Single-line JSON parsing - SUCCESS\n")
+        }, error = function(e) {
+          cat("✗ Single-line JSON parsing - FAILED:", e$message, "\n")
+        })
+        EOF
+        Rscript test_singleline.R
+        
+    - name: Examine FaaSr Script
       run: |
         cd /action
-        cat > test_json_processing.R << 'EOF'
-        cat("=== R JSON PROCESSING DEBUG ===\n")
-        
-        # Test if R can read the PAYLOAD environment variable
-        payload_raw <- Sys.getenv("PAYLOAD")
-        cat("PAYLOAD from R Sys.getenv():\n")
-        cat("Length:", nchar(payload_raw), "\n")
-        cat("First 100 chars:", substr(payload_raw, 1, 100), "\n")
-        cat("Last 100 chars:", substr(payload_raw, nchar(payload_raw)-99, nchar(payload_raw)), "\n")
-        
-        # Test if there are any problematic characters
-        cat("Contains newlines:", grepl("\n", payload_raw), "\n")
-        cat("Contains carriage returns:", grepl("\r", payload_raw), "\n")
-        
-        # Try different JSON parsing approaches
-        cat("\n=== JSON PARSING TESTS ===\n")
-        
-        # Test 1: jsonlite::fromJSON
-        tryCatch({
-          library(jsonlite)
-          parsed_jsonlite <- jsonlite::fromJSON(payload_raw)
-          cat("✓ jsonlite::fromJSON - SUCCESS\n")
-        }, error = function(e) {
-          cat("✗ jsonlite::fromJSON - FAILED:", e$message, "\n")
-        })
-        
-        cat("=== R DEBUG COMPLETE ===\n")
-        EOF
-        
-        Rscript test_json_processing.R
+        echo "=== FAASR SCRIPT EXAMINATION ==="
+        ls -la faasr_start_invoke_github-actions.R
+        echo "=== First 30 lines ==="
+        head -30 faasr_start_invoke_github-actions.R
+        echo "=== JSON-related lines ==="
+        grep -n -i "json\|fromjson" faasr_start_invoke_github-actions.R || echo "No obvious JSON parsing"
+        echo "=== PAYLOAD-related lines ==="
+        grep -n "PAYLOAD\|Sys.getenv" faasr_start_invoke_github-actions.R || echo "No PAYLOAD usage found"
         
     - name: run Rscript
       run: |
