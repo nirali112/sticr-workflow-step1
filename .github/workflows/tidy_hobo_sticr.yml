@@ -14,7 +14,6 @@ jobs:
       MY_MINIO_BUCKET_ACCESS_KEY: ${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}
       MY_MINIO_BUCKET_SECRET_KEY: ${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      # PAYLOAD_REPO: ${{ vars.PAYLOAD_REPO }}  # Commenting out the old approach
       PAYLOAD: |
         {
           "FunctionList": ["faasr_tidy_hobo_sticr"],
@@ -41,17 +40,39 @@ jobs:
           }
         }
     steps:
-    - name: Debug PAYLOAD Environment Variable
+    - name: Test R JSON Processing
       run: |
-        echo "=== PAYLOAD DEBUG ==="
-        echo "PAYLOAD is set and contains JSON"
-        echo "First few lines of PAYLOAD:"
-        echo "$PAYLOAD" | head -5
-        echo "=== JSON VALIDATION ==="
-        echo "$PAYLOAD" | jq . > /dev/null && echo "✓ Valid JSON" || echo "✗ Invalid JSON"
-        echo "=== ENVIRONMENT COMPARISON ==="
-        echo "PAYLOAD_REPO: not set (as expected)"
-        echo "PAYLOAD: YES (set directly)"
+        cd /action
+        cat > test_json_processing.R << 'EOF'
+        cat("=== R JSON PROCESSING DEBUG ===\n")
+        
+        # Test if R can read the PAYLOAD environment variable
+        payload_raw <- Sys.getenv("PAYLOAD")
+        cat("PAYLOAD from R Sys.getenv():\n")
+        cat("Length:", nchar(payload_raw), "\n")
+        cat("First 100 chars:", substr(payload_raw, 1, 100), "\n")
+        cat("Last 100 chars:", substr(payload_raw, nchar(payload_raw)-99, nchar(payload_raw)), "\n")
+        
+        # Test if there are any problematic characters
+        cat("Contains newlines:", grepl("\n", payload_raw), "\n")
+        cat("Contains carriage returns:", grepl("\r", payload_raw), "\n")
+        
+        # Try different JSON parsing approaches
+        cat("\n=== JSON PARSING TESTS ===\n")
+        
+        # Test 1: jsonlite::fromJSON
+        tryCatch({
+          library(jsonlite)
+          parsed_jsonlite <- jsonlite::fromJSON(payload_raw)
+          cat("✓ jsonlite::fromJSON - SUCCESS\n")
+        }, error = function(e) {
+          cat("✗ jsonlite::fromJSON - FAILED:", e$message, "\n")
+        })
+        
+        cat("=== R DEBUG COMPLETE ===\n")
+        EOF
+        
+        Rscript test_json_processing.R
         
     - name: run Rscript
       run: |
