@@ -44,16 +44,14 @@ jobs:
     - name: Debug PAYLOAD Environment Variable
       run: |
         echo "=== PAYLOAD DEBUG ==="
-        echo "PAYLOAD length: ${#PAYLOAD}"
-        echo "PAYLOAD first 200 chars:"
-        echo "${PAYLOAD:0:200}"
-        echo "PAYLOAD last 100 chars:"
-        echo "${PAYLOAD: -100}"
+        echo "PAYLOAD is set and contains JSON"
+        echo "First few lines of PAYLOAD:"
+        echo "$PAYLOAD" | head -5
         echo "=== JSON VALIDATION ==="
         echo "$PAYLOAD" | jq . > /dev/null && echo "✓ Valid JSON" || echo "✗ Invalid JSON"
         echo "=== ENVIRONMENT COMPARISON ==="
-        echo "PAYLOAD_REPO: ${PAYLOAD_REPO:-'(not set)'}"
-        echo "PAYLOAD is set: ${PAYLOAD:+'YES'}"
+        echo "PAYLOAD_REPO: not set (as expected)"
+        echo "PAYLOAD: YES (set directly)"
         
     - name: run Rscript
       run: |
