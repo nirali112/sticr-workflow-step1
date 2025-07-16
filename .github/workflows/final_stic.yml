@@ -1,0 +1,27 @@
+name: Running Action- final_stic
+on:
+  workflow_dispatch:
+    inputs:
+      PAYLOAD:
+        description: 'Payload'
+        required: false
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  run_docker_image:
+    runs-on: ubuntu-latest
+    container: ghcr.io/faasr/github-actions-tidyverse
+    env:
+      MY_GITHUB_ACCOUNT_TOKEN: ${{ secrets.MY_GITHUB_ACCOUNT_TOKEN }}
+      MY_MINIO_BUCKET_ACCESS_KEY: ${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}
+      MY_MINIO_BUCKET_SECRET_KEY: ${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      SECRET_PAYLOAD: '{}'
+      PAYLOAD: '{"ComputeServers":{"My_GitHub_Account":{"FaaSType":"GitHubActions","UserName":"nirali112","ActionRepoName":"sticr-workflow-step1","Branch":"main","Token":"${{ secrets.MY_GITHUB_ACCOUNT_TOKEN }}"}},"FunctionList":{"final_stic":{"FunctionName":"faasr_final_stic","FaaSServer":"My_GitHub_Account"}},"ActionContainers":{"final_stic":"ghcr.io/faasr/github-actions-tidyverse"},"FunctionCRANPackage":{"faasr_final_stic":["tidyverse","lubridate"]},"FunctionGitHubPackage":{"faasr_final_stic":["HEAL-KGS/STICr"]},"FunctionGitRepo":{"faasr_final_stic":"nirali112/sticr-functions"},"DataStores":{"My_Minio_Bucket":{"Endpoint":"https://play.min.io","Bucket":"faasr","Region":"us-east-1","Writable":"TRUE","AccessKey":"${{ secrets.MY_MINIO_BUCKET_ACCESS_KEY }}","SecretKey":"${{ secrets.MY_MINIO_BUCKET_SECRET_KEY }}"}},"FunctionInvoke":"final_stic","FaaSrLog":"FaaSrLog","DefaultDataStore":"My_Minio_Bucket"}'
+    steps: 
+    - name: run Rscript
+      run: |
+        cd /action
+        Rscript faasr_start_invoke_github-actions.R
